@@ -100,12 +100,15 @@ type Link struct {
 	Params map[string]Param
 }
 
-// Param represents a single link parameter
-// This is necessary because parameters can state their own encoding, and be
-// multipart. See http://tools.ietf.org/html/rfc2231
+// Param represents a single link parameter. This is necessary because
+// parameters can state their own encoding.
+// See http://tools.ietf.org/html/rfc2231
 //
 // Although the encoding may not be UTF-8 compliant, we still return a UTF-8
 // string. Other encodings must be handled by the caller if desired.
+//
+// Multipart params are not supported, but may be reconscruted on their own
+// by contatenating all the param*N named params in order of N.
 type Param struct {
 	Value string
 	Enc   string
