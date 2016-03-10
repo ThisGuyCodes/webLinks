@@ -1,3 +1,6 @@
+// Package webLinks provides a parser for web links.
+// More precisely this is the "Link" header, according to
+// http://tools.ietf.org/html/rfc5988
 package webLinks
 
 import (
