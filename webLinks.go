@@ -6,9 +6,9 @@ import (
 	"strings"
 )
 
-// ParseLink parses a "Link" header. This accepts only the value portion of
+// Parse parses a "Link" header. This accepts only the value portion of
 // the header, not the whole header.
-func ParseLink(link string) []Link {
+func Parse(link string) []Link {
 	// Strip whitespace
 	link = strings.Trim(link, " ")
 
@@ -25,7 +25,7 @@ func ParseLink(link string) []Link {
 	if nextLink == paramsEnd {
 		return []Link{thisLink}
 	}
-	return append([]Link{thisLink}, ParseLink(link[nextLink:])...)
+	return append([]Link{thisLink}, Parse(link[nextLink:])...)
 }
 
 func parseLinkParams(params string) (map[string]Param, int) {

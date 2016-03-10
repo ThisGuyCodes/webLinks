@@ -57,7 +57,7 @@ var tests = []struct {
 func TestParseLinksURI(t *testing.T) {
 	t.Parallel()
 	for _, test := range tests {
-		links := webLinks.ParseLink(test.input)
+		links := webLinks.Parse(test.input)
 		if len(links) != len(test.links) {
 			t.Fatalf("Length mismatch, got %d expected %d\n", len(links), len(test.links))
 		}
@@ -72,7 +72,7 @@ func TestParseLinksURI(t *testing.T) {
 func TestParseLinksParamValue(t *testing.T) {
 	t.Parallel()
 	for _, test := range tests {
-		links := webLinks.ParseLink(test.input)
+		links := webLinks.Parse(test.input)
 		if len(links) != len(test.links) {
 			t.Fatalf("Length mismatch, got %d expected %d\n", len(links), len(test.links))
 		}
@@ -96,7 +96,7 @@ func BenchmarkParseLinksFancy(b *testing.B) {
 	b.ReportAllocs()
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
-		webLinks.ParseLink(this)
+		webLinks.Parse(this)
 	}
 }
 
@@ -107,7 +107,7 @@ func BenchmarkParseLinksSimple(b *testing.B) {
 	b.ReportAllocs()
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
-		webLinks.ParseLink(this)
+		webLinks.Parse(this)
 	}
 }
 
@@ -118,6 +118,6 @@ func BenchmarkParseLinksSimplist(b *testing.B) {
 	b.ReportAllocs()
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
-		webLinks.ParseLink(this)
+		webLinks.Parse(this)
 	}
 }
