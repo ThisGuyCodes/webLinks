@@ -1,6 +1,7 @@
 package webLinks
 
 import (
+	"bytes"
 	"fmt"
 	"net/url"
 	"strings"
@@ -9,16 +10,18 @@ import (
 // ParseLink parses a "Link" header. This accepts only the value portion of
 // the header, not the whole header.
 func ParseLink(link string) []Link {
+	// Bytes!
+	bLink := []byte(link)
 	// Strip whitespace
-	link = strings.Trim(link, " ")
+	bLink = bytes.Trim(bLink, " ")
 
 	thisLink := Link{}
-	uriEnd := strings.IndexRune(link, '>')
+	uriEnd := bytes.IndexRune(bLink, '>')
 
-	thisLink.URI = link[1:uriEnd]
+	thisLink.URI = string(bLink[1:uriEnd])
 
 	paramsStart := strings.IndexRune(link[uriEnd:], ';') + uriEnd + 1
-	params, paramsEnd := parseLinkParams(link[paramsStart:])
+	params, paramsEnd := parseLinkParams(bLink[paramsStart:])
 	paramsEnd += paramsStart
 	thisLink.Params = params
 	nextLink := strings.IndexRune(link[paramsEnd:], ',') + paramsEnd + 1
@@ -28,12 +31,12 @@ func ParseLink(link string) []Link {
 	return append([]Link{thisLink}, ParseLink(link[nextLink:])...)
 }
 
-func parseLinkParams(params string) (map[string]Param, int) {
-	paramsEnd := strings.IndexRune(params, ',')
+func parseLinkParams(params []byte) (map[string]Param, int) {
+	paramsEnd := bytes.IndexRune(params, ',')
 	if paramsEnd == -1 {
 		paramsEnd = len(params)
 	}
-	pStrs := strings.Split(params[:paramsEnd], ";")
+	pStrs := bytes.Split(params[:paramsEnd], []byte(";"))
 	mapped := make(map[string]Param, len(pStrs))
 	for _, p := range pStrs {
 		key, value := parseParam(p)
@@ -42,56 +45,58 @@ func parseLinkParams(params string) (map[string]Param, int) {
 	return mapped, paramsEnd
 }
 
-func parseParam(param string) (string, Param) {
+func parseParam(param []byte) (string, Param) {
+	thisParam := Param{
+		Enc:  "us-ascii",
+		Lang: "en-us",
+	}
+
 	// Trim whitespace
-	param = strings.Trim(param, " ")
-	parts := strings.SplitN(param, "=", 2)
+	param = bytes.Trim(param, " ")
+	parts := bytes.SplitN(param, []byte("="), 2)
 	if len(parts) != 2 {
 		// This does not fall within the spec, so 'best effort'
-		return param, Param{}
+		return string(param), thisParam
 	}
 	key, value := parts[0], parts[1]
 
-	enc := "us-ascii"
-	lang := "en-us"
-
-	if strings.HasSuffix(key, "*") {
+	if bytes.HasSuffix(key, []byte("*")) {
 		// value is URL encoded and *may* contain encoding+language meta
 
 		// Strip the * indicator
 		key = key[:len(key)-1]
 
 		// Split out the encoding information
-		valueParts := strings.Split(value, "'")
+		valueParts := bytes.Split(value, []byte("'"))
 		if len(valueParts) == 3 {
-			enc = valueParts[0]
-			lang = valueParts[1]
+			thisParam.Enc = string(valueParts[0])
+			thisParam.Lang = string(valueParts[1])
 			value = valueParts[2]
 		}
 		// It's just encoded, leave the defaults
 
 		// Decode this sucker
-		decoded, err := url.QueryUnescape(value)
+		sValue := string(value)
+		decoded, err := url.QueryUnescape(sValue)
 		if err == nil {
-			value = decoded
+			sValue = decoded
 		}
 		// not within spec, just leave it encoded
+		thisParam.Value = sValue
 	} else {
 		// It's not encoded, but it's quoted
 		// Let's dequote it
 		var dequoted string
-		n, err := fmt.Sscanf(value, "%q", &dequoted)
+		sValue := string(value)
+		n, err := fmt.Sscanf(sValue, "%q", &dequoted)
 		if n == 1 && err == nil {
-			value = dequoted
+			thisParam.Value = dequoted
+		} else {
+			// ???, just leave it as is
+			thisParam.Value = sValue
 		}
-		// ???, just leave it as is
 	}
-	p := Param{
-		Value: value,
-		Enc:   enc,
-		Lang:  lang,
-	}
-	return key, p
+	return string(key), thisParam
 }
 
 // Link represents a link from a parsed Link header
