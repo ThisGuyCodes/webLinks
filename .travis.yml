@@ -12,3 +12,8 @@ script: go test -v -cover ./...
 
 notifications:
   email: false
+
+matrix:
+  allow_failures:
+    - go: tip
+  fast_finish: true
