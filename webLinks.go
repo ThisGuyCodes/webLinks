@@ -11,7 +11,7 @@ import (
 
 // Parse parses a "Link" header. This accepts only the value portion of
 // the header, not the whole header.
-func Parse(link string) []Link {
+func Parse(link string) Links {
 	// Strip whitespace
 	link = strings.Trim(link, " ")
 
@@ -26,9 +26,9 @@ func Parse(link string) []Link {
 	thisLink.Params = params
 	nextLink := strings.IndexRune(link[paramsEnd:], ',') + paramsEnd + 1
 	if nextLink == paramsEnd {
-		return []Link{thisLink}
+		return Links{thisLink}
 	}
-	return append([]Link{thisLink}, Parse(link[nextLink:])...)
+	return append(Links{thisLink}, Parse(link[nextLink:])...)
 }
 
 func parseLinkParams(params string) (map[string]Param, int) {
@@ -101,6 +101,26 @@ func parseParam(param string) (string, Param) {
 type Link struct {
 	URI    string
 	Params map[string]Param
+}
+
+// Links represents a group of links. This allows useful parsing on top of
+// groups of links.
+type Links []Link
+
+// Map returns links mapped in relation:link format. Duplicates have
+// undefined behavior, links without a "rel" param are omitted.
+// Links with a "rel" param, but alternative encoding, are stored according to
+// UTF-8 encoding.
+func (l Links) Map() map[string]Link {
+	these := make(map[string]Link, len(l))
+
+	for _, link := range l {
+		if rel, ok := link.Params["rel"]; ok {
+			these[rel.Value] = link
+		}
+	}
+
+	return these
 }
 
 // Param represents a single link parameter. This is necessary because
