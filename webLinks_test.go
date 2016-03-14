@@ -89,6 +89,40 @@ func TestParseLinksParamValue(t *testing.T) {
 	}
 }
 
+func TestParseLinksIntoMap(t *testing.T) {
+	t.Parallel()
+	links := webLinks.Links{
+		webLinks.Link{
+			URI: "some uri",
+			Params: map[string]webLinks.Param{
+				"rel": {
+					Value: "some relation",
+					Enc:   "doesn't matter",
+					Lang:  "this either",
+				},
+			},
+		},
+		webLinks.Link{
+			URI: "another uri",
+			Params: map[string]webLinks.Param{
+				"rel": {
+					Value: "another relation",
+				},
+			},
+		},
+	}
+
+	these := links.Map()
+
+	if these["some relation"].URI != "some uri" {
+		t.Fatalf("Got bad relation in map. Got %q expected %1\n", these["some relation"].URI, "some uri")
+	}
+
+	if these["another relation"].URI != "another uri" {
+		t.Fatalf("Got bad relation in map. Got %q expected %1\n", these["another relation"].URI, "another uri")
+	}
+}
+
 func BenchmarkParseLinksFancy(b *testing.B) {
 	this := `</TheBook/chapter2>; rel="previous"; title*=UTF-8'de'letztes%20Kapitel, </TheBook/chapter4>; rel="next"; title*=UTF-8'de'n%c3%a4chstes%20Kapitel`
 	b.SetBytes(int64(len([]byte(this))))
